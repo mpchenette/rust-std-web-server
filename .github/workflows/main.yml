@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, demo, dioxus ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  infrastructure:
+    environment: Azure
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: actions/checkout@v3
+        with:
+          repository: chenette/bicep
+          ref: templates
+          path: bicep
+
+      - uses: actions/checkout@v3
+        with:
+          path: main
+
+      # - run: cp bicep/bicepconfig.json main/bicepconfig.json
+      - uses: azure/arm-deploy@v1
+        with:
+          scope: subscription
+          region: southcentralus
+          template: main/main.bicep
+          
+  # application:
+  #   environment: Azure
+  #   runs-on: ubuntu-latest
