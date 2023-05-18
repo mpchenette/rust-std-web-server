@@ -4,46 +4,29 @@ use std::net::{Shutdown, TcpListener, TcpStream};
 use std::str;
 use std::thread;
 
-// fn handle_connection(mut stream: TcpStream) {
-//     // println!("pwd: {:?}", std::env::current_dir());
-//     // let paths = fs::read_dir("./").unwrap();
-//     // for path in paths {
-//     //     println!("Name: {}", path.unwrap().path().display())
-//     // }
-//     let header: String = "HTTP/1.1 200 OK Content-Type: text/html; charset=utf-8".to_string();
-//     let webpage: String = String::from_utf8_lossy(&fs::read("./index.html").unwrap())
-//         .parse()
-//         .unwrap();
-//     // stream
-//     //     .write(b"HTTP/1.1 200 OK Content-Type: text/html; charset=utf-8")
-//     //     .unwrap();
-
-//     stream.write(header.as_bytes()).unwrap();
-//     stream.write(webpage.as_bytes()).unwrap();
-
-//     // stream.write(&(fs::read("../index.html").unwrap())).unwrap();
-// }
-
 fn handle_connection(mut stream: TcpStream) {
-    // let webpage: String = String::from_utf8_lossy(&fs::read("index.html").unwrap())
-    //     .parse()
-    //     .unwrap();
     let mut data = [0 as u8; 5000];
-    println!("reading stream");
-
-    while match stream.read(&mut data) {
+    match stream.read(&mut data) {
         Ok(size) => {
             let s = match str::from_utf8(&data[0..size]) {
                 Ok(v) => v,
                 Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
             };
-            println!("{}", s);
+            let mut toks = s.split(' ').fuse();
+            let first = toks.next();
+            let second = toks.next();
 
-            // echo everything!
-            // stream.write(webpage.as_bytes()).unwrap();
-            stream.write(&(fs::read("index.html").unwrap())).unwrap();
-
-            false
+            println!("{:?}, {:?}", first, second);
+            match second {
+                Some("/") => stream
+                    .write(&(fs::read("site/index.html").unwrap()))
+                    .unwrap(),
+                Some("/abc.png") => stream.write(&(fs::read("site/abc.png").unwrap())).unwrap(),
+                Some("/favicon.ico") => stream
+                    .write(&(fs::read("site/favicon.ico").unwrap()))
+                    .unwrap(),
+                _ => usize::MIN,
+            };
         }
         Err(_) => {
             println!(
@@ -51,9 +34,8 @@ fn handle_connection(mut stream: TcpStream) {
                 stream.peer_addr().unwrap()
             );
             stream.shutdown(Shutdown::Both).unwrap();
-            false
         }
-    } {}
+    }
 }
 
 fn main() {
