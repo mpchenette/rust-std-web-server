@@ -21,8 +21,9 @@ fn handle_connection(mut stream: TcpStream) {
                 Some("/") => stream
                     .write(&(fs::read("site/index.html").unwrap()))
                     .unwrap(),
-                Some("/abc.png") => stream.write(&(fs::read("site/abc.png").unwrap())).unwrap(),
-                Some("/favicon.ico") => stream
+                    Some("/abc.png") => stream.write(&(fs::read("site/abc.png").unwrap())).unwrap(),
+                    Some("/styles/style.css") => stream.write(&(fs::read("site/styles/style.css").unwrap())).unwrap(),
+                    Some("/favicon.ico") => stream
                     .write(&(fs::read("site/favicon.ico").unwrap()))
                     .unwrap(),
                 _ => usize::MIN,
