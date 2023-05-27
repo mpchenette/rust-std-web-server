@@ -62,29 +62,34 @@ fn handle_tcp_stream(mut stream: std::net::TcpStream) {
     let _abc = String::from("/abc.png");
     let _css = String::from("/styles/style.css");
     let _ico = String::from("/favicon.ico");
-    match req {
-        Http { request_method, request_url: "/", request_version } => stream
-            .write(&(std::fs::read("site/index.html").unwrap()))
-            .unwrap(),
-        Http {
-            request_url: _abc, ..
-        } => stream
-            .write(&(std::fs::read("site/abc.png").unwrap()))
-            .unwrap(),
-        Http {
-            request_url: _css, ..
-        } => stream
-            .write(&(std::fs::read("site/styles/style.css").unwrap()))
-            .unwrap(),
-        Http {
-            request_url: _ico, ..
-        } => stream
-            .write(&(std::fs::read("site/favicon.ico").unwrap()))
-            .unwrap(),
-        _ => stream
-            .write(&(std::fs::read("site/404.html").unwrap()))
-            .unwrap(),
-    };
+    if req.request_url == "/" {
+
+    } else if req.request_url == "/" {
+
+    }
+    // match req.request_url {
+    //     "/" => stream
+    //         .write(&(std::fs::read("site/index.html").unwrap()))
+    //         .unwrap(),
+    //     Http {
+    //         request_url: _abc, ..
+    //     } => stream
+    //         .write(&(std::fs::read("site/abc.png").unwrap()))
+    //         .unwrap(),
+    //     Http {
+    //         request_url: _css, ..
+    //     } => stream
+    //         .write(&(std::fs::read("site/styles/style.css").unwrap()))
+    //         .unwrap(),
+    //     Http {
+    //         request_url: _ico, ..
+    //     } => stream
+    //         .write(&(std::fs::read("site/favicon.ico").unwrap()))
+    //         .unwrap(),
+    //     _ => stream
+    //         .write(&(std::fs::read("site/404.html").unwrap()))
+    //         .unwrap(),
+    // };
 }
 
 fn main() {
