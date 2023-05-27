@@ -58,38 +58,27 @@ fn handle_tcp_stream(mut stream: std::net::TcpStream) {
     println!("method: {}", req.request_method);
     println!("url: {}", req.request_url);
     println!("version: {}", req.request_version);
-    let _ind = String::from("/");
-    let _abc = String::from("/abc.png");
-    let _css = String::from("/styles/style.css");
-    let _ico = String::from("/favicon.ico");
-    if req.request_url == "/" {
 
-    } else if req.request_url == "/" {
-
+    let url: String;
+    if req.request_url.eq("/") {
+        url = String::from("/index.html")
+    } else {
+        url = req.request_url // not sure if it's faster/more efficint to set this in an else or just set it initially then overwrite if index
     }
-    // match req.request_url {
-    //     "/" => stream
-    //         .write(&(std::fs::read("site/index.html").unwrap()))
-    //         .unwrap(),
-    //     Http {
-    //         request_url: _abc, ..
-    //     } => stream
-    //         .write(&(std::fs::read("site/abc.png").unwrap()))
-    //         .unwrap(),
-    //     Http {
-    //         request_url: _css, ..
-    //     } => stream
-    //         .write(&(std::fs::read("site/styles/style.css").unwrap()))
-    //         .unwrap(),
-    //     Http {
-    //         request_url: _ico, ..
-    //     } => stream
-    //         .write(&(std::fs::read("site/favicon.ico").unwrap()))
-    //         .unwrap(),
-    //     _ => stream
-    //         .write(&(std::fs::read("site/404.html").unwrap()))
-    //         .unwrap(),
-    // };
+
+    let mut path: String = String::from("site").to_owned();
+    path.push_str(&url);
+    let str_path: &str = &path;
+
+    let file_contents_result = std::fs::read(str_path);
+
+    let file_contents: Vec<u8> = match file_contents_result {
+        Ok(v) => v,
+        Err(_) => std::fs::read("site/404.html").unwrap(),
+    };
+
+    stream.write(&file_contents).unwrap();
+    
 }
 
 fn main() {
