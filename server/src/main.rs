@@ -12,14 +12,6 @@ struct Http {
 // Returns an http struct if valid, null if not
 // actually I think panic if invalid. that way we only accept valid http requests
 fn is_valid_http(mut request: &std::net::TcpStream) -> Http {
-    println!("\nIS_VALID_HTTP\n-------------");
-    // let mut request_as_string: String = String::new();
-    // println!("ras created");
-    // match request.read_to_string(&mut request_as_string) {
-    //     Ok(v) => v,
-    //     Err(_) => 0,
-    // };
-
     let mut data: [u8; 5000] = [0 as u8; 5000];
     // let s: &str = "";
     match request.read(&mut data) {
@@ -44,7 +36,6 @@ fn is_valid_http(mut request: &std::net::TcpStream) -> Http {
             request.shutdown(std::net::Shutdown::Both).unwrap();
         }
     }
-
     return Http {
         request_method: String::from("a"),
         request_url: String::from("b"),
@@ -53,32 +44,19 @@ fn is_valid_http(mut request: &std::net::TcpStream) -> Http {
 }
 
 fn handle_tcp_stream(mut stream: std::net::TcpStream) {
-    println!("\nHANDLE_TCP_STREAM\n----------------");
     let req: Http = is_valid_http(&stream);
-    println!("method: {}", req.request_method);
-    println!("url: {}", req.request_url);
-    println!("version: {}", req.request_version);
-
-    let url: String;
+    let mut url: String = String::from("site"); //String::from("/index.html"); // is this (and the below) the best way to do this?
     if req.request_url.eq("/") {
-        url = String::from("/index.html")
-    } else {
-        url = req.request_url // not sure if it's faster/more efficint to set this in an else or just set it initially then overwrite if index
+        url.push_str("/index.html");
     }
-
-    let mut path: String = String::from("site").to_owned();
-    path.push_str(&url);
-    let str_path: &str = &path;
-
-    let file_contents_result = std::fs::read(str_path);
-
-    let file_contents: Vec<u8> = match file_contents_result {
+    else {
+        url.push_str(&(req.request_url)); // not sure if it's faster/more efficint to set this in an else or just set it initially then overwrite if index
+    }
+    let file_contents: Vec<u8> = match std::fs::read(&url) {
         Ok(v) => v,
         Err(_) => std::fs::read("site/404.html").unwrap(),
     };
-
     stream.write(&file_contents).unwrap();
-    
 }
 
 fn main() {
