@@ -9,11 +9,9 @@ struct Http {
     request_version: String,
 }
 
-// Returns an http struct if valid, null if not
-// actually I think panic if invalid. that way we only accept valid http requests
+// Returns an http struct if valid, panic if not
 fn is_valid_http(mut request: &std::net::TcpStream) -> Http {
     let mut data: [u8; 5000] = [0 as u8; 5000];
-    // let s: &str = "";
     match request.read(&mut data) {
         Ok(size) => {
             let s: &str = match std::str::from_utf8(&data[0..size]) {
@@ -29,18 +27,11 @@ fn is_valid_http(mut request: &std::net::TcpStream) -> Http {
             return req;
         }
         Err(_) => {
-            println!(
-                "An error occurred, terminating connection with {}",
-                request.peer_addr().unwrap()
-            );
-            request.shutdown(std::net::Shutdown::Both).unwrap();
-        }
+            request.shutdown(std::net::Shutdown::Both).unwrap(); // Do I need to shutdown the tcpstream???
+            panic!("Invalid HTTP Request. Shutting down the TcpStream.");
+        } //panic if invalid. only accept valid http requests
+        // should i panic if I'm in a thread? does that even work?
     }
-    return Http {
-        request_method: String::from("a"),
-        request_url: String::from("b"),
-        request_version: String::from("c"),
-    };
 }
 
 fn handle_tcp_stream(mut stream: std::net::TcpStream) {
@@ -48,8 +39,7 @@ fn handle_tcp_stream(mut stream: std::net::TcpStream) {
     let mut url: String = String::from("site"); //String::from("/index.html"); // is this (and the below) the best way to do this?
     if req.request_url.eq("/") {
         url.push_str("/index.html");
-    }
-    else {
+    } else {
         url.push_str(&(req.request_url)); // not sure if it's faster/more efficint to set this in an else or just set it initially then overwrite if index
     }
     let file_contents: Vec<u8> = match std::fs::read(&url) {
