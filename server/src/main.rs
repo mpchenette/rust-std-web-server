@@ -11,14 +11,17 @@ struct Http {
 
 // Returns an http struct if valid, panic if not
 fn is_valid_http(mut request: &std::net::TcpStream) -> Http {
-    let mut data: [u8; 5000] = [0 as u8; 5000];
+    let mut data: [u8; 5000] = [0 as u8; 5000];//String = String::new();
     match request.read(&mut data) {
         Ok(size) => {
             let s: &str = match std::str::from_utf8(&data[0..size]) {
                 Ok(v) => v,
                 Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
             };
+            // println!("attempting to split, {}", data);
             let mut request_items: SplitWhitespace = s.split_whitespace();
+            // println!("just split, {}", request_items.next().unwrap().to_string());
+
             let req: Http = Http {
                 request_method: request_items.next().unwrap().to_string(),
                 request_url: request_items.next().unwrap().to_string(),
@@ -30,12 +33,12 @@ fn is_valid_http(mut request: &std::net::TcpStream) -> Http {
             request.shutdown(std::net::Shutdown::Both).unwrap(); // Do I need to shutdown the tcpstream???
             panic!("Invalid HTTP Request. Shutting down the TcpStream.");
         } //panic if invalid. only accept valid http requests
-        // should i panic if I'm in a thread? does that even work?
+          // should i panic if I'm in a thread? does that even work?
     }
 }
 
-fn handle_tcp_stream(mut stream: std::net::TcpStream) {
-    let req: Http = is_valid_http(&stream);
+fn handle_tcp_stream(mut tcp_stream: std::net::TcpStream) {
+    let req: Http = is_valid_http(&tcp_stream);
     let mut url: String = String::from("site"); //String::from("/index.html"); // is this (and the below) the best way to do this?
     if req.request_url.eq("/") {
         url.push_str("/index.html");
@@ -46,7 +49,19 @@ fn handle_tcp_stream(mut stream: std::net::TcpStream) {
         Ok(v) => v,
         Err(_) => std::fs::read("site/404.html").unwrap(),
     };
-    stream.write(&file_contents).unwrap();
+    match tcp_stream.write(&file_contents) {
+        Ok(size) => {
+            println!(
+                "TcpStream Write Success: {} (of size {} bytes) written to {}",
+                url,
+                size,
+                tcp_stream.local_addr().unwrap()
+            )
+        }
+        Err(e) => {
+            println!("TcpStream Write Error: {}", e)
+        }
+    }
 }
 
 fn main() {
@@ -56,12 +71,12 @@ fn main() {
         match tcp_stream {
             Ok(tcp_stream) => {
                 // https://doc.rust-lang.org/std/thread/index.html#spawning-a-thread
-                let thread_join_handle = std::thread::spawn(move || handle_tcp_stream(tcp_stream));
+                let thread_join_handle: std::thread::JoinHandle<()> = std::thread::spawn(move || handle_tcp_stream(tcp_stream));
                 let res = thread_join_handle.join();
 
                 // https://doc.rust-lang.org/std/thread/type.Result.html#examples
                 match res {
-                    Ok(_) => println!("spawn succeeded"),
+                    Ok(_) => {},//println!("spawn succeeded"),
                     Err(e) => std::panic::resume_unwind(e),
                 }
             }
