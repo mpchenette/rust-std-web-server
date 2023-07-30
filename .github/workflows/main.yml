@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master, demo, dioxus ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -13,7 +13,6 @@ permissions:
 
 jobs:
   infrastructure:
-    environment: Azure
     runs-on: ubuntu-latest
 
     steps:
@@ -25,21 +24,10 @@ jobs:
 
       - uses: actions/checkout@v3
         with:
-          repository: chenette/bicep
-          ref: templates
-          path: bicep
+          path: rust
 
-      - uses: actions/checkout@v3
-        with:
-          path: main
-
-      # - run: cp bicep/bicepconfig.json main/bicepconfig.json
       - uses: azure/arm-deploy@v1
         with:
-          scope: subscription
-          region: southcentralus
-          template: main/main.bicep
-          
-  # application:
-  #   environment: Azure
-  #   runs-on: ubuntu-latest
+          scope: resourcegroup
+          resourceGroupName: rg-chenette-prod-001
+          template: main.bicep
