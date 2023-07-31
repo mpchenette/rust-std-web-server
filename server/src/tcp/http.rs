@@ -4,22 +4,22 @@ pub struct HttpRequest {
     pub version: String,
 }
 
-pub fn is_valid_http_1_1(supposed_http_request: &str) -> bool {
-    // https://datatracker.ietf.org/doc/html/rfc9112
+// pub fn is_valid_http_1_1(supposed_http_request: &str) -> bool {
+//     // https://datatracker.ietf.org/doc/html/rfc9112
 
-    let mut request_items: std::str::SplitWhitespace = supposed_http_request.split_whitespace();
+//     let mut request_items: std::str::SplitWhitespace = supposed_http_request.split_whitespace();
     
 
-    while request_items.next() != None
-    {
+//     while request_items.next() != None
+//     {
 
-    }
+//     }
 
-    // Method - https://datatracker.ietf.org/doc/html/rfc9112#section-3.1
-    // "The request method is case-sensitive."
+//     // Method - https://datatracker.ietf.org/doc/html/rfc9112#section-3.1
+//     // "The request method is case-sensitive."
 
-    return false;
-}
+//     return false;
+// }
 
 pub fn construct_http_request_from_vec_u8(buffer: Vec<u8>) -> HttpRequest {
     // Take the Vec<u8> and turn it into a &str
