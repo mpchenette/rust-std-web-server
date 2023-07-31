@@ -78,7 +78,8 @@ resource acrCredential 'Microsoft.Web/sites/config@2022-09-01' = {
   parent: app
   name: 'appsettings'
   properties: {
-    registryUsername: cr.listCredentials().username
-    registryPassword: cr.listCredentials().passwords[0].value
+    DOCKER_REGISTRY_SERVER_URL: cr.name
+    DOCKER_REGISTRY_SERVER_USERNAME: cr.listCredentials().username
+    DOCKER_REGISTRY_SERVER_PASSWORD: cr.listCredentials().passwords[0].value
   }
 }
