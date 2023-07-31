@@ -67,19 +67,33 @@ resource app 'Microsoft.Web/sites@2022-09-01' = {
     reserved: true
     serverFarmId: asp.id
     siteConfig: {
-      acrUseManagedIdentityCreds: true
+      // acrUseManagedIdentityCreds: true
       alwaysOn: true
       linuxFxVersion: 'DOCKER|crchenetteprod001.azurecr.io/chenette.com:latest'
+      appSettings: [
+        {
+          name: 'DOCKER_REGISTRY_SERVER_URL'
+          value: 'https://crchenetteprod001.azurecr.io'
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_USERNAME'
+          value: 'crcoreprod001'
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
+          value: 'm5kOKRer+s9N242ssERZp1KHp3nlwgmi'
+        }
+      ]
     }
   }
 }
 
-resource acrCredential 'Microsoft.Web/sites/config@2022-09-01' = {
-  parent: app
-  name: 'appsettings'
-  properties: {
-    DOCKER_REGISTRY_SERVER_URL: 'https://chenettetestacr.azurecr.io'
-    DOCKER_REGISTRY_SERVER_USERNAME: cr.listCredentials().username
-    DOCKER_REGISTRY_SERVER_PASSWORD: cr.listCredentials().passwords[0].value
-  }
-}
+// resource acrCredential 'Microsoft.Web/sites/config@2022-09-01' = {
+//   parent: app
+//   name: 'appsettings'
+//   properties: {
+//     DOCKER_REGISTRY_SERVER_URL: 'https://crchenetteprod001.azurecr.io'
+//     DOCKER_REGISTRY_SERVER_USERNAME: cr.listCredentials().username
+//     DOCKER_REGISTRY_SERVER_PASSWORD: cr.listCredentials().passwords[0].value
+//   }
+// }
