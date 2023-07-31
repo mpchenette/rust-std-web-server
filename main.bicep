@@ -78,7 +78,7 @@ resource acrCredential 'Microsoft.Web/sites/config@2022-09-01' = {
   parent: app
   name: 'appsettings'
   properties: {
-    DOCKER_REGISTRY_SERVER_URL: cr.name
+    DOCKER_REGISTRY_SERVER_URL: 'https://chenettetestacr.azurecr.io'
     DOCKER_REGISTRY_SERVER_USERNAME: cr.listCredentials().username
     DOCKER_REGISTRY_SERVER_PASSWORD: cr.listCredentials().passwords[0].value
   }
