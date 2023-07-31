@@ -69,11 +69,11 @@ resource app 'Microsoft.Web/sites@2022-09-01' = {
     siteConfig: {
       // acrUseManagedIdentityCreds: true
       alwaysOn: true
-      linuxFxVersion: 'DOCKER|crchenetteprod001.azurecr.io/chenette.com:latest'
+      linuxFxVersion: 'DOCKER|crcoreprod001.azurecr.io/chenette.com:latest'
       appSettings: [
         {
           name: 'DOCKER_REGISTRY_SERVER_URL'
-          value: 'https://crchenetteprod001.azurecr.io'
+          value: 'https://crcoreprod001.azurecr.io'
         }
         {
           name: 'DOCKER_REGISTRY_SERVER_USERNAME'
