@@ -59,5 +59,5 @@ pub fn construct_http_request_from_vec_u8(buffer: Vec<u8>) -> HttpRequest {
         http_request.method, http_request.url, http_request.version
     );
 
-    return http_request;
+    http_request
 }
