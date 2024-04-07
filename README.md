@@ -37,3 +37,6 @@ Last, regardless of which step you took above, navigate to `127.0.0.1:80` in you
 
 ## Goal
 To build a rust web server (not framework) that uses only the base rust crates, no external crates. Call it mesh? We should allow others to fork or clone it (or maybe use a GH Action?) to utilize it. They just drop their site in and run it. Preferrably docker. Claim to fame: smallest docker images you can get.
+
+## Known issues
+The docker build does not seem to work on apple silicon as im not sure there is a way to compile static rust binaries on apple silicon. I'm thinking [this is the issue](https://stackoverflow.com/questions/76618704/is-it-possible-to-static-link-the-rust-application-when-using-apple-m1).
