@@ -5,6 +5,7 @@
 - Rust: things not in std: log, regex, tls
 - enable binding to both IPv4 and IPv6 in main.rs
 - convert all current print statements into logs
+- tls/https
 
 ## How to run the server
 
@@ -24,3 +25,7 @@ First, navigate into the server folder using `cd server`
         ```
 
 Last, regardless of which step you took above, navigte to `127.0.0.1:80` in your browser.
+
+
+## Goal
+To build a rust web server (not framework) that uses only the base rust crates, no external crates. Call it mesh? We should allow others to fork or clone it (or maybe use a GH Action?) to utilize it. They just drop their site in and run it. Preferrably docker. Claim to fame: smallest docker images you can get.
