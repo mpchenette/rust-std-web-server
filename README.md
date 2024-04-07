@@ -16,6 +16,14 @@ First, navigate into the server folder using `cd server`
     cargo run
     ```
 
+    or potentially
+
+    ```
+    sudo cargo run
+    ```
+
+    on macOS or Linux
+
 - If `const DOCKER: bool = true;` in src/main.rs, 
     - First, ensure Docker desktop is running
     - Then, run
@@ -24,7 +32,7 @@ First, navigate into the server folder using `cd server`
         docker run -p 80:80 <image-name>
         ```
 
-Last, regardless of which step you took above, navigte to `127.0.0.1:80` in your browser.
+Last, regardless of which step you took above, navigate to `127.0.0.1:80` in your browser.
 
 
 ## Goal
