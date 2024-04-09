@@ -16,17 +16,26 @@ fn main() {
         Err(e) => panic!("ERROR (MAIN): Unable to bind to {}. Error: {}", address, e),
     };
 
-    println!("LOG (MAIN): Listening on {}", tcp_listener.local_addr().unwrap());
+    // LOG the address that the TcpListener is listening on
+    match tcp_listener.local_addr() {
+        Ok(local_addr) => println!("LOG (MAIN): Server is listening on {}", local_addr),
+        Err(e) => println!("WARNING (MAIN): Failed to log the local address: {}", e),
+    }
 
     // Handle the TcpStream (connection) of each client who connects to the server (via the TcpListener)
     for tcp_stream in tcp_listener.incoming() {
-
-        println!("\nLOG (MAIN): TcpStream Received");
         match tcp_stream {
             Ok(tcp_stream) => {
+                match tcp_stream.local_addr() {
+                    Ok(local_addr) => println!("\nLOG (MAIN): New TcpStream Received ({})", local_addr),
+                    Err(e) => println!("WARNING (MAIN): Failed to log the local address: {}", e),
+                }
+
                 // https://doc.rust-lang.org/std/thread/index.html#spawning-a-thread
-                let thread_join_handle: std::thread::JoinHandle<()> = std::thread::spawn(move || tcp::handle_tcp_stream(tcp_stream));
-                let join_result: Result<(), Box<dyn std::any::Any + Send>> = thread_join_handle.join();
+                let thread_join_handle: std::thread::JoinHandle<()> =
+                    std::thread::spawn(move || tcp::handle_tcp_stream(tcp_stream));
+                let join_result: Result<(), Box<dyn std::any::Any + Send>> =
+                    thread_join_handle.join();
 
                 // https://doc.rust-lang.org/std/thread/type.Result.html#examples
                 match join_result {
