@@ -1,6 +1,8 @@
 // main.rs
 
 mod tcp;
+mod thread;
+
 const DOCKER: bool = true;
 
 // fn main() - Create a TcpListener to handle TcpStreams (i.e., connections) from clients
@@ -22,6 +24,8 @@ fn main() {
         Err(e) => println!("WARNING (MAIN): Failed to log the local address: {}", e),
     }
 
+    let pool: thread::Pool = thread::Pool::new(4); // When idle, threads seem to consume, on average, ~40 kB of memory each
+
     // Handle the TcpStream (connection) of each client who connects to the server (via the TcpListener)
     for tcp_stream in tcp_listener.incoming() {
         match tcp_stream {
@@ -31,17 +35,20 @@ fn main() {
                     Err(e) => println!("WARNING (MAIN): Failed to log the local address: {}", e),
                 }
 
-                // https://doc.rust-lang.org/std/thread/index.html#spawning-a-thread
-                let thread_join_handle: std::thread::JoinHandle<()> =
-                    std::thread::spawn(move || tcp::handle_tcp_stream(tcp_stream));
-                let join_result: Result<(), Box<dyn std::any::Any + Send>> =
-                    thread_join_handle.join();
+                // Handle the TcpStream using a thread from the thread pool
+                pool.execute(|| tcp::handle_tcp_stream(tcp_stream)); //move?
+                
+                // // https://doc.rust-lang.org/std/thread/index.html#spawning-a-thread
+                // let thread_join_handle: std::thread::JoinHandle<()> =
+                //     std::thread::spawn(move || tcp::handle_tcp_stream(tcp_stream));
+                // let join_result: Result<(), Box<dyn std::any::Any + Send>> =
+                //     thread_join_handle.join();
 
-                // https://doc.rust-lang.org/std/thread/type.Result.html#examples
-                match join_result {
-                    Ok(_) => println!("LOG (MAIN): Thread Join Succeeded"),
-                    Err(e) => std::panic::resume_unwind(e),
-                }
+                // // https://doc.rust-lang.org/std/thread/type.Result.html#examples
+                // match join_result {
+                //     Ok(_) => println!("LOG (MAIN): Thread Join Succeeded"),
+                //     Err(e) => std::panic::resume_unwind(e),
+                // }
             }
             Err(e) => {
                 println!("ERROR (MAIN): TcpStream Error: {}", e)

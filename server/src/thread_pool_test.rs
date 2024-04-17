@@ -1,4 +1,4 @@
-mod pool;
+mod thread;
 
 fn handle_connection() {
     // Simulate handling a connection
@@ -6,10 +6,10 @@ fn handle_connection() {
 }
 
 fn main() {
-    let num_tasks: usize = 100;
+    let num_tasks: usize = 10000;
 
     // Benchmark thread pool
-    let pool: pool::ThreadPool = pool::ThreadPool::new(4);
+    let pool: thread::Pool = thread::Pool::new(4);
     let start: std::time::Instant = std::time::Instant::now();
     for _ in 0..num_tasks {
         pool.execute(|| handle_connection());

@@ -4,7 +4,7 @@
     - SonarCloud
 - Rust: things not in std: log, regex, tls
 - enable binding to both IPv4 and IPv6 in main.rs
-- convert all current print statements into logs
+- convert all current print statements into logs (4/2024 - can't do this in native rust. only println exists)
 - tls/https
 - thread pool instead of new thread for each connection (ask copilot)
   - consider changing the type alias 'Job' to 'Task' in the thread pool benchmark
