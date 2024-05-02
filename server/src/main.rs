@@ -5,12 +5,12 @@ mod thread;
 
 const DOCKER: bool = true;
 
-// fn main() - Create a TcpListener to handle TcpStreams (i.e., connections) from clients
+// Create a TcpListener (on the server) to handle TcpStreams (i.e., connections from clients)
 fn main() {
     println!("LOG (MAIN): Starting server");
 
     // Determine which IPv4 address we will attempt to bind to - https://stackoverflow.com/questions/66725777/how-to-connect-to-rust-server-app-that-runs-on-docker
-    let address: &str = if DOCKER { "0.0.0.0:80" } else { "127.0.0.1:80" };
+    let address: &str = if DOCKER { "0.0.0.0:8000" } else { "127.0.0.1:8000" };
 
     // Create the TcpListener by binding to the determined address
     let tcp_listener: std::net::TcpListener = match std::net::TcpListener::bind(address) {
@@ -24,7 +24,7 @@ fn main() {
         Err(e) => println!("WARNING (MAIN): Failed to log the local address: {}", e),
     }
 
-    // Create a thread pool to handle the TcpStreams (i.e., connections) from clients
+    // Create a thread pool to handle incoming TcpStreams (i.e., connections from clients)
     let pool: thread::Pool = thread::Pool::new(4); // When idle, threads seem to consume, on average, ~40 kB of memory each
 
     // Handle the TcpStream (connection) of each client who connects to the server (via the TcpListener)
