@@ -8,6 +8,10 @@
 - tls/https
 - thread pool instead of new thread for each connection (ask copilot)
   - consider changing the type alias 'Job' to 'Task' in the thread pool benchmark
+- as per https://en.wikipedia.org/wiki/HTTP#Response_status_codes, make the reason phrases overridable. provide defaults but allow overriding.
+- change the tcp_stream.read to tec_stream.read_to_end now that we have a timeout
+  - scratch the above. use bufreader instead
+- look into if it's best practice to have main() return Result<(), Box<dyn Error>> or std::io::Result<()>
 
 ## How to run the server
 
