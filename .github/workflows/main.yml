@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   infrastructure:
+    environment: prod
     runs-on: ubuntu-latest
 
     steps:
@@ -25,9 +26,8 @@ jobs:
       - uses: azure/arm-deploy@v2
         with:
           scope: resourcegroup
-          resourceGroupName: NetworkWatcherRG #          rg-chenette-prod-001
+          resourceGroupName: rg-website-test-001
           template: main.bicep
-          deploymentMode: Complete
 
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v5
