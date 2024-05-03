@@ -27,12 +27,12 @@ resource app 'Microsoft.Web/sites@2022-09-01' = {
       // acrUseManagedIdentityCreds: true
       alwaysOn: true
       linuxFxVersion: 'DOCKER|index.docker.io/mpchenette/rust-std-web-server:latest'
-      appSettings: [
-        {
-          name: 'DOCKER_REGISTRY_SERVER_URL'
-          value: 'https://index.docker.io'
-        }
-      ]
+      // appSettings: [
+      //   {
+      //     name: 'DOCKER_REGISTRY_SERVER_URL'
+      //     value: 'https://index.docker.io'
+      //   }
+      // ]
     }
   }
 }
@@ -43,6 +43,7 @@ resource acrCredential 'Microsoft.Web/sites/config@2022-09-01' = {
   properties: {
 
     DOCKER_REGISTRY_SERVER_URL: 'https://index.docker.io'
+    WEBSITES_PORT: '8000'
     // DOCKER_REGISTRY_SERVER_USERNAME: cr.listCredentials().username
     // DOCKER_REGISTRY_SERVER_PASSWORD: cr.listCredentials().passwords[0].value
   }
