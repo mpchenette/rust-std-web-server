@@ -2,8 +2,8 @@
 
 This is a web server written in [Rust](https://www.rust-lang.org/) that only uses the [std](https://doc.rust-lang.org/std/) library.
 
-In doing so, we are able to containerize and statically link the web server, giving us a
-Docker image that is ~5 Mb in size.
+In doing so, we are able to statically link and containerize the web server, giving us a
+Docker image that is ~5 MB in size.
 
 ## To-Do
 - Add to CI/CD
