@@ -25,7 +25,7 @@ jobs:
       - uses: azure/arm-deploy@v2
         with:
           scope: resourcegroup
-          resourceGroupName: azureapp-auto-alerts-0155a0-matthew_chenette_com #          rg-chenette-prod-001
+          resourceGroupName: NetworkWatcherRG #          rg-chenette-prod-001
           template: main.bicep
           deploymentMode: Complete
 
