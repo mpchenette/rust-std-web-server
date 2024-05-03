@@ -16,17 +16,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # - uses: azure/login@v1
-      #   with:
-      #     client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      #     tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-      #     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      # - uses: actions/checkout@v3
-      # - uses: azure/arm-deploy@v1
-      #   with:
-      #     scope: resourcegroup
-      #     resourceGroupName: rg-chenette-prod-001
-      #     template: main.bicep
+      - uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - uses: actions/checkout@v3
+      - uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          resourceGroupName: rg-chenette-prod-001
+          template: main.bicep
+          deploymentMode: Complete
+          
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v5
         with:
