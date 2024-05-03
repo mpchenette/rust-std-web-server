@@ -25,10 +25,10 @@ jobs:
       - uses: azure/arm-deploy@v2
         with:
           scope: resourcegroup
-          resourceGroupName: rg-chenette-prod-001
+          resourceGroupName: azureapp-auto-alerts-0155a0-matthew_chenette_com #          rg-chenette-prod-001
           template: main.bicep
           deploymentMode: Complete
-          
+
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v5
         with:
