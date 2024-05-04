@@ -1,6 +1,6 @@
 param location string = resourceGroup().location
 
-resource asp 'Microsoft.Web/serverfarms@2022-09-01' = {
+resource asp 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: 'asp-mpchenette-prod-southcentralus-001'
   location: location
   sku: {
@@ -15,7 +15,7 @@ resource asp 'Microsoft.Web/serverfarms@2022-09-01' = {
   }
 }
 
-resource app 'Microsoft.Web/sites@2022-09-01' = {
+resource app 'Microsoft.Web/sites@2023-01-01' = {
   name: 'mpchenette'
   location: location
   kind: 'app,linux,container'
@@ -37,7 +37,7 @@ resource app 'Microsoft.Web/sites@2022-09-01' = {
   }
 }
 
-resource acrCredential 'Microsoft.Web/sites/config@2022-09-01' = {
+resource appSettings 'Microsoft.Web/sites/config@2023-01-01' = {
   parent: app
   name: 'appsettings'
   properties: {
