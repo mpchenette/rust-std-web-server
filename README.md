@@ -71,3 +71,9 @@ The Docker build does not seem to work on Apple silicon as I'm not sure there is
 1. When creating the `TcpListener` in main, we explicitly use a `SocketAddr` (as oppose to just providing a string) as it is the more explicit approach. If you provide a string (&str) or other allowed value, it will create and use a `SocketAddr` behind the scenes anyway, so let's bring that logic to the front and make it visible. [Test](server/src/main.rs#L20)
 
 1. To the best of our ability, we follow the https://en.wikipedia.org/wiki/Principle_of_least_astonishment. Meaning that our functions and variables should do exactly what they seem like they would do on the surface. Ex. a function like `is_valid_http_request_method` returns a boolean, not a string of the validated HTTP method. But a function like `validate_http_request_method` might validate AND return the valid HTTP method.
+
+
+## Decision Explanations for my future self
+1. In files like http.rs, we use naming conventions that may seem repetitive (like using `HttpRequest` inside of the `http.rs` file as oppose to just using `Request`) because I prefer, in functions like `vec_u8_to_http_request` to have the return type be `HttpRequest` as the function name implies
+
+1. In structs like those in `http.rs`, we use `String` as oppose to `&str` because

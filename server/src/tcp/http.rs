@@ -14,9 +14,6 @@ pub struct HttpRequestLine {
 pub struct HttpRequestHeaderFields {
     pub headers: std::collections::HashMap<String, String>,
 }
-
-// Rename to just 'request' since we are already in the http file? Whatever approach we use, we will need to standardize across all files.
-// Answer: No. I prefer in the functions to have the vec_u8_to_http_request return an HttpRequest, for example
 pub struct HttpRequest {
     pub http_request_line: HttpRequestLine,
     pub http_header_fields: HttpRequestHeaderFields,
