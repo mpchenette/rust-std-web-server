@@ -69,3 +69,5 @@ The Docker build does not seem to work on Apple silicon as I'm not sure there is
 1. We use the `?` operator to propagate errors (when possible) instead of match statements as they are more concise and easier to read.
 
 1. When creating the `TcpListener` in main, we explicitly use a `SocketAddr` (as oppose to just providing a string) as it is the more explicit approach. If you provide a string (&str) or other allowed value, it will create and use a `SocketAddr` behind the scenes anyway, so let's bring that logic to the front and make it visible. [Test](server/src/main.rs#L20)
+
+1. To the best of our ability, we follow the https://en.wikipedia.org/wiki/Principle_of_least_astonishment. Meaning that our functions and variables should do exactly what they seem like they would do on the surface. Ex. a function like `is_valid_http_request_method` returns a boolean, not a string of the validated HTTP method. But a function like `validate_http_request_method` might validate AND return the valid HTTP method.
