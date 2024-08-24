@@ -10,6 +10,7 @@ Docker image that is ~5 MB in size.
     - OWASP ZAP
     - SonarCloud
       - SonarCLoud does not support rust but we can use cargo clippy and cargo tarpaulin. cargo audit?
+    - cargo test (unit testing)
 - Rust: things not in std: log, regex, tls
 - enable binding to both IPv4 and IPv6 in main.rs
 - convert all current print statements into logs (4/2024 - can't do this in native rust. only println exists)
@@ -74,6 +75,14 @@ The Docker build does not seem to work on Apple silicon as I'm not sure there is
 
 
 ## Decision Explanations for my future self
+
+### http.rs
 1. In files like http.rs, we use naming conventions that may seem repetitive (like using `HttpRequest` inside of the `http.rs` file as oppose to just using `Request`) because I prefer, in functions like `vec_u8_to_http_request` to have the return type be `HttpRequest` as the function name implies
 
 1. In structs like those in `http.rs`, we use `String` as oppose to `&str` because
+
+1. We validate the individual components of a received HttpRequest as we construct it (instead of validating after construction) because validating components as you parse them allows for early error detection and more efficient resource usage (i.e., avoiding constructing and then discarding an invalid HttpRequest.).
+
+1. We use [match guards](https://doc.rust-lang.org/rust-by-example/flow_control/match/guard.html) when parsing the received lines so we can validate the data as we structure it.
+
+1. We use `const` and not `static` for the supported methods and versions because they are immutable and known at compile time.

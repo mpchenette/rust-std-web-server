@@ -1,7 +1,6 @@
 // HttpRequest
 
-// TODO: Should I be using const or static here? and why?
-pub const SUPPORTED_HTTP_METHODS: [&str; 5] = ["GET", "HEAD", "POST", "PUT", "DELETE"];
+pub const SUPPORTED_HTTP_METHODS: [&str; 5] = ["GET", "HEAD", "POST", "PUT", "DELETE"]; // "All general-purpose servers MUST support the methods GET and HEAD. All other methods are OPTIONAL." - rfc9110#section-9
 pub const SUPPORTED_HTTP_VERSIONS: [&str; 1] = ["HTTP/1.1"];
 
 // https://datatracker.ietf.org/doc/html/rfc9112#section-3
@@ -39,20 +38,13 @@ pub struct HttpResponse {
     pub body: Vec<u8>,
 }
 
-// TODO: Change return String to &str? Would this make sense?
-pub fn validate_http_request_method(potential_http_method: &str) -> String {
-    // https://datatracker.ietf.org/doc/html/rfc9110#section-9
-    // "The method token is case-sensitive..."
-    // "All general-purpose servers MUST support the methods GET and HEAD. All other methods are OPTIONAL."
-    // "An origin server that receives a request method that is unrecognized or not implemented SHOULD respond with the 501 (Not Implemented) status code."
-
+pub fn is_valid_http_request_method(potential_http_method: &str) -> bool {
+    // "The method token is case-sensitive..." - rfc9110#section-9
     // TODO: CHECK IF THIS IS CASE SENSITIVE. IT NEEDS TO BE.
-    if !SUPPORTED_HTTP_METHODS.contains(&potential_http_method) {
-        // TODO: construct and return a 501 response
+    if SUPPORTED_HTTP_METHODS.contains(&potential_http_method) {
+        return true;
     }
-
-    // Return the validated http method
-    potential_http_method.to_string()
+    false
 }
 
 // TODO: Change return String to &str? Would this make sense?
@@ -60,21 +52,25 @@ pub fn validate_http_request_uri(potential_http_uri: &str) -> String {
     potential_http_uri.to_string()
 }
 
-// TODO: Change return String to &str? Would this make sense?
-pub fn validate_http_request_version(potential_http_version: &str) -> String {
-    // https://datatracker.ietf.org/doc/html/rfc9112#section-2.3
-    // "HTTP-version is case-sensitive."
-
+pub fn is_valid_http_request_version(potential_http_version: &str) -> bool {
+    // "HTTP-version is case-sensitive." - rfc9112#section-2.3
     // TODO: CHECK IF THIS IS CASE SENSITIVE. IT NEEDS TO BE.
-    if !SUPPORTED_HTTP_VERSIONS.contains(&potential_http_version) {
-        // TODO: construct and return a 501 response
+    if SUPPORTED_HTTP_VERSIONS.contains(&potential_http_version) {
+        return true;
     }
-
-    // Return the validated http method
-    potential_http_version.to_string()
+    false
 }
 
-pub fn vec_u8_to_http_request(buffer: Vec<u8>) -> HttpRequest {
+#[derive(Debug)]
+pub enum HttpRequestError {
+    InvalidMethod,
+    InvalidUri,
+    InvalidVersion,
+    Utf8Error,
+    EmptyRequest,
+}
+
+pub fn vec_u8_to_http_request(buffer: Vec<u8>) -> Result<HttpRequest, HttpRequestError> {
     // Take the Vec<u8> and turn it into a &str
     let str_to_split: &str = std::str::from_utf8(buffer.as_slice()).unwrap();
 
@@ -84,19 +80,27 @@ pub fn vec_u8_to_http_request(buffer: Vec<u8>) -> HttpRequest {
     let request_line: &str = request_lines.next().unwrap();
     let mut request_line_parts: std::str::SplitWhitespace = request_line.split_whitespace();
 
-    let request_method: String = validate_http_request_method(request_line_parts.next().unwrap());
+    // approach 3 (from copilot) - uses a match guard
+    let request_method: String = match request_line_parts.next() {
+        Some(http_method) if is_valid_http_request_method(http_method) => http_method.to_string(),
+        _ => { panic!("")
+            // "An origin server that receives a request method that is unrecognized or not implemented SHOULD respond with the 501 (Not Implemented) status code." - rfc9110#section-9
+            // TODO: don't panic, send 501 Not Implemented response and return Error
+        }
+    };
+
     let request_uri: String = validate_http_request_uri(request_line_parts.next().unwrap());
     let request_version: String = validate_http_request_version(request_line_parts.next().unwrap());
 
     // Construct HttpRequestLine
     let http_request_line: HttpRequestLine = HttpRequestLine {
-        method: request_method.clone(), //TODO: Is clone needed here? It does not look like we use these values after this
+        http_method: request_method.clone(), //TODO: Is clone needed here? It does not look like we use these values after this
         uri: request_uri.clone(),
-        version: request_version.clone(),
+        http_version: request_version.clone(),
     };
 
     // Construct HttpRequestHeaderFields
-    let mut header_fields: HttpRequestHeaderFields = HttpRequestHeaderFields {
+    let mut http_header_fields: HttpRequestHeaderFields = HttpRequestHeaderFields {
         headers: std::collections::HashMap::new(),
     };
     // FROM COPILOT ---
@@ -105,7 +109,9 @@ pub fn vec_u8_to_http_request(buffer: Vec<u8>) -> HttpRequest {
             break;
         }
         if let Some((key, value)) = line.split_once(": ") {
-            header_fields.headers.insert(key.to_string(), value.to_string());
+            http_header_fields
+                .headers
+                .insert(key.to_string(), value.to_string());
         }
     }
     // The remaining part is the body
@@ -115,12 +121,12 @@ pub fn vec_u8_to_http_request(buffer: Vec<u8>) -> HttpRequest {
 
     // Construct HttpRequest
     let http_request: HttpRequest = HttpRequest {
-        request_line: http_request_line,
-        header_fields: header_fields,
+        http_request_line: http_request_line,
+        http_header_fields: http_header_fields,
         body: body,
     };
-    println!("LOG (CONSTRUCT_HTTP_REQUEST_FROM_VEC_U8):\n   HttpRequest Constructed:\n      method: {}\n      uri: {}\n      version: {}", http_request.request_line.method, http_request.request_line.uri, http_request.request_line.version);
-    http_request
+    println!("LOG (CONSTRUCT_HTTP_REQUEST_FROM_VEC_U8):\n   HttpRequest Constructed:\n      method: {}\n      uri: {}\n      version: {}", http_request.http_request_line.http_method, http_request.http_request_line.uri, http_request.http_request_line.http_version);
+    Ok(http_request)
 }
 
 pub fn construct_http_response(buffer: Vec<u8>) -> HttpResponse {
@@ -138,4 +144,16 @@ pub fn construct_http_response(buffer: Vec<u8>) -> HttpResponse {
         body: buffer,
     };
     http_response
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_add() {
+        assert!(is_valid_http_request_method("GET"));
+        assert!(is_valid_http_request_method("GET"));
+        assert!(is_valid_http_request_method("GET"));
+    }
 }
