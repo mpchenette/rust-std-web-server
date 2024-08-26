@@ -1,4 +1,8 @@
+// tcp/http/mod.rs
+
 // HttpRequest
+
+mod error;
 
 pub const SUPPORTED_HTTP_METHODS: [&str; 5] = ["GET", "HEAD", "POST", "PUT", "DELETE"]; // "All general-purpose servers MUST support the methods GET and HEAD. All other methods are OPTIONAL." - rfc9110#section-9
 pub const SUPPORTED_HTTP_VERSIONS: [&str; 1] = ["HTTP/1.1"];
@@ -48,8 +52,8 @@ pub fn is_valid_http_request_method(potential_http_method: &str) -> bool {
 }
 
 // TODO: Change return String to &str? Would this make sense?
-pub fn validate_http_request_uri(potential_http_uri: &str) -> String {
-    potential_http_uri.to_string()
+pub fn is_valid_http_request_uri(potential_http_uri: &str) -> bool {
+    true
 }
 
 pub fn is_valid_http_request_version(potential_http_version: &str) -> bool {
@@ -61,16 +65,8 @@ pub fn is_valid_http_request_version(potential_http_version: &str) -> bool {
     false
 }
 
-#[derive(Debug)]
-pub enum HttpRequestError {
-    InvalidMethod,
-    InvalidUri,
-    InvalidVersion,
-    Utf8Error,
-    EmptyRequest,
-}
-
-pub fn vec_u8_to_http_request(buffer: Vec<u8>) -> Result<HttpRequest, HttpRequestError> {
+// Construct a HttpRequest from a Vec<u8>. Will return an error if any parts of the passed Vec<u8> request are invalid HTTP
+pub fn vec_u8_to_http_request(buffer: Vec<u8>) -> Result<HttpRequest, error::HttpRequestError> {
     // Take the Vec<u8> and turn it into a &str
     let str_to_split: &str = std::str::from_utf8(buffer.as_slice()).unwrap();
 
@@ -80,24 +76,42 @@ pub fn vec_u8_to_http_request(buffer: Vec<u8>) -> Result<HttpRequest, HttpReques
     let request_line: &str = request_lines.next().unwrap();
     let mut request_line_parts: std::str::SplitWhitespace = request_line.split_whitespace();
 
-    // approach 3 (from copilot) - uses a match guard
+    // ----- REQUEST LINE -----
     let request_method: String = match request_line_parts.next() {
         Some(http_method) if is_valid_http_request_method(http_method) => http_method.to_string(),
-        _ => { panic!("")
+        _ => {
+            panic!("")
             // "An origin server that receives a request method that is unrecognized or not implemented SHOULD respond with the 501 (Not Implemented) status code." - rfc9110#section-9
             // TODO: don't panic, send 501 Not Implemented response and return Error
         }
     };
 
-    let request_uri: String = validate_http_request_uri(request_line_parts.next().unwrap());
-    let request_version: String = validate_http_request_version(request_line_parts.next().unwrap());
+    let request_uri: String = match request_line_parts.next() {
+        Some(uri) if is_valid_http_request_uri(uri) => uri.to_string(),
+        _ => {
+            panic!("")
+            // TODO: don't panic, send ??? response and return Error
+        }
+    };
+
+    let request_version: String = match request_line_parts.next() {
+        Some(http_version) if is_valid_http_request_version(http_version) => {
+            http_version.to_string()
+        }
+        _ => {
+            panic!("")
+            // TODO: don't panic, send ??? response and return Error
+        }
+    };
 
     // Construct HttpRequestLine
     let http_request_line: HttpRequestLine = HttpRequestLine {
-        http_method: request_method.clone(), //TODO: Is clone needed here? It does not look like we use these values after this
-        uri: request_uri.clone(),
-        http_version: request_version.clone(),
+        http_method: request_method,
+        uri: request_uri,
+        http_version: request_version,
     };
+
+    // ----- HEADER FIELDS -----
 
     // Construct HttpRequestHeaderFields
     let mut http_header_fields: HttpRequestHeaderFields = HttpRequestHeaderFields {
@@ -152,8 +166,30 @@ mod tests {
 
     #[test]
     fn test_add() {
-        assert!(is_valid_http_request_method("GET"));
-        assert!(is_valid_http_request_method("GET"));
-        assert!(is_valid_http_request_method("GET"));
+        //for each method in SUPPORTED_HTTP_METHODS, assert that it is a valid http method
+        
+        for method in SUPPORTED_HTTP_METHODS.iter() {
+            // TODO: should I be putting prints in my unit tests?
+            println!("method: {}", method);
+            assert!(is_valid_http_request_method(method));
+        }
+        assert!(!is_valid_http_request_method("NONE")); // Not an HTTP method
+        assert!(!is_valid_http_request_method("get")); // lowercase
+        assert!(!is_valid_http_request_method("DELET")); // incomplete
+
+        // Additional test cases (from Copilot)
+        assert!(!is_valid_http_request_method("")); // Empty string
+        assert!(!is_valid_http_request_method(" ")); // Single whitespace
+        assert!(!is_valid_http_request_method("   ")); // Multiple whitespaces
+        assert!(!is_valid_http_request_method("GET ")); // Trailing whitespace
+        assert!(!is_valid_http_request_method(" GET")); // Leading whitespace
+        assert!(!is_valid_http_request_method("G@T")); // Special character
+        assert!(!is_valid_http_request_method("123")); // Numeric string
+        assert!(!is_valid_http_request_method("GeT")); // Mixed case
+        assert!(!is_valid_http_request_method("GETPOST")); // Concatenated valid methods
+        assert!(!is_valid_http_request_method("GETPOSTDELETE")); // Multiple concatenated valid methods
+        assert!(!is_valid_http_request_method("GETPOSTDELETEPUTHEAD")); // All valid methods concatenated
+        assert!(!is_valid_http_request_method(&("A".repeat(100)))); // Excessively long string
+        
     }
 }

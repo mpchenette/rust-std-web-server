@@ -2,7 +2,6 @@
 
 mod tcp;
 mod thread;
-mod copilot_http_request_validation;
 
 // const DOCKER: bool = true;
 

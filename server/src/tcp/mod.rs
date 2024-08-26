@@ -1,4 +1,4 @@
-// tcp.rs
+// tcp/mod.rs
 
 mod auxillary;
 mod http; // the reason for the tcp folder: https://doc.rust-lang.org/rust-by-example/mod/split.html
