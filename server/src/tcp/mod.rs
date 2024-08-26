@@ -4,7 +4,7 @@ mod auxillary;
 mod http; // the reason for the tcp folder: https://doc.rust-lang.org/rust-by-example/mod/split.html
 const SITE_PATH: &str = "site/";
 
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{Read, Write};
 
 pub fn handle_tcp_stream(mut tcp_stream: std::net::TcpStream) {
     let tcp_stream_vec_u8: Vec<u8> = tcp_stream_to_vec_u8(&tcp_stream); // read request into typeless vector

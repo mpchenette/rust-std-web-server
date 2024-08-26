@@ -31,9 +31,7 @@ pub struct HttpResponseStatusLine {
 }
 
 pub struct HttpResponseHeaderFields {
-    pub version: String,
-    pub status_code: String,
-    pub reason_phrase: String,
+    pub headers: std::collections::HashMap<String, String>,
 }
 
 pub struct HttpResponse {
@@ -53,6 +51,7 @@ pub fn is_valid_http_request_method(potential_http_method: &str) -> bool {
 
 // TODO: Change return String to &str? Would this make sense?
 pub fn is_valid_http_request_uri(potential_http_uri: &str) -> bool {
+    println!("LOG (IS_VALID_HTTP_REQUEST_URI): potential_http_uri: {}", potential_http_uri);
     true
 }
 
@@ -139,7 +138,22 @@ pub fn vec_u8_to_http_request(buffer: Vec<u8>) -> Result<HttpRequest, error::Htt
         http_header_fields: http_header_fields,
         body: body,
     };
+
+    //unused, just here to get rid of warnings
+    let http_response: HttpResponse = construct_http_response(buffer);
+    println!("LOG (CONSTRUCT_HTTP_REQUEST_FROM_VEC_U8):\n   HttpResponse Constructed:\n      version: {}\n      status_code: {}\n      reason_phrase: {}", http_response.status_line.version, http_response.status_line.status_code, http_response.status_line.reason_phrase);
+    for (key, value) in http_response.header_fields.headers.iter() {
+        println!("      {}: {}", key, value);
+    }
+    println!("      body: {:?}", http_response.body);
+
+
+
     println!("LOG (CONSTRUCT_HTTP_REQUEST_FROM_VEC_U8):\n   HttpRequest Constructed:\n      method: {}\n      uri: {}\n      version: {}", http_request.http_request_line.http_method, http_request.http_request_line.uri, http_request.http_request_line.http_version);
+    for (key, value) in http_request.http_header_fields.headers.iter() {
+        println!("      {}: {}", key, value);
+    }
+    println!("      body: {:?}", http_request.body);
     Ok(http_request)
 }
 
@@ -151,9 +165,7 @@ pub fn construct_http_response(buffer: Vec<u8>) -> HttpResponse {
             reason_phrase: "OK".to_string(),
         },
         header_fields: HttpResponseHeaderFields {
-            version: "HTTP/1.1".to_string(),
-            status_code: "200".to_string(),
-            reason_phrase: "OK".to_string(),
+            headers: std::collections::HashMap::new(),
         },
         body: buffer,
     };
