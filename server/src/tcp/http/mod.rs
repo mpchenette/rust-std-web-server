@@ -139,16 +139,16 @@ pub fn vec_u8_to_http_message(buffer: Vec<u8>) -> Result<HttpMessage, error::Htt
 
     //unused, just here to get rid of warnings
     let http_response: HttpMessage = construct_http_response(Vec::new());
-    println!("LOG (CONSTRUCT_HTTP_REQUEST_FROM_VEC_U8):\n   HttpResponse Constructed:\n      version: {}\n      status_code: {}\n      reason_phrase: {}", http_response.status_line.version, http_response.status_line.status_code, http_response.status_line.reason_phrase);
-    for (key, value) in http_response.header_field_lines.iter() {
-        println!("      {:?}: {:?}", key, value);
-    }
-    println!("      body: {:?}", http_response.body);
+    // println!("LOG (CONSTRUCT_HTTP_REQUEST_FROM_VEC_U8):\n   HttpResponse Constructed:\n      version: {}\n      status_code: {}\n      reason_phrase: {}", http_response.status_line.version, http_response.status_line.status_code, http_response.status_line.reason_phrase);
+    // for (key, value) in http_response.header_field_lines.iter() {
+    //     println!("      {:?}: {:?}", key, value);
+    // }
+    // println!("      body: {:?}", http_response.body);
 
-    println!("LOG (CONSTRUCT_HTTP_REQUEST_FROM_VEC_U8):\n   HttpRequest Constructed:\n      method: {}\n      uri: {}\n      version: {}", http_request.http_request_line.http_method, http_request.http_request_line.uri, http_request.http_request_line.http_version);
-    for (key, value) in http_request.header_field_lines.iter() {
-        println!("      {:?}: {:?}", key, value);
-    }
+    // println!("LOG (CONSTRUCT_HTTP_REQUEST_FROM_VEC_U8):\n   HttpRequest Constructed:\n      method: {}\n      uri: {}\n      version: {}", http_request.http_request_line.http_method, http_request.http_request_line.uri, http_request.http_request_line.http_version);
+    // for (key, value) in http_request.header_field_lines.iter() {
+    //     println!("      {:?}: {:?}", key, value);
+    // }
     println!("      body: {:?}", http_request.body);
     Ok(http_request)
 }
@@ -223,10 +223,10 @@ mod tests {
             http_version: b"HTTP/1.1".to_vec(),
         };
 
-        let mut headers: std::collections::HashMap<String, String> = std::collections::HashMap::new();
-        headers.insert("Host".to_string(), "localhost:8000".to_string());
-        headers.insert("User-Agent".to_string(), "curl/7.64.1".to_string());
-        headers.insert("Accept".to_string(), "*/*".to_string());
+        let mut headers: std::collections::HashMap<Vec<u8>, Vec<u8>> = std::collections::HashMap::new();
+        headers.insert(b"Host".to_vec(), b"localhost:8000".to_vec());
+        headers.insert(b"User-Agent".to_vec(), b"curl/7.64.1".to_vec());
+        headers.insert(b"Accept".to_vec(), b"*/*".to_vec());
 
         let http_request_to_compare: HttpMessage = HttpMessage {
             start_line: StartLine::RequestLine(http_request_line),
