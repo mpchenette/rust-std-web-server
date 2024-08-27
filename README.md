@@ -2,8 +2,7 @@
 
 This is a web server written in [Rust](https://www.rust-lang.org/) that only uses the [std](https://doc.rust-lang.org/std/) library.
 
-In doing so, we are able to statically link and containerize the web server, giving us a
-Docker image that is ~5 MB in size.
+In doing so, we are able to statically link and containerize the web server, giving us a Docker image that is ~5 MB in size.
 
 ## To-Do
 - Add to CI/CD
@@ -22,6 +21,7 @@ Docker image that is ~5 MB in size.
   - scratch the above. use bufreader instead
 - look into if it's best practice to have main() return Result<(), Box<dyn Error>> or std::io::Result<()>
 - be sure we are handling header injection attacks when ingesting HTTP requests
+- double check all `pub` items. Only make public what needs to be public. [PoLP](https://en.wikipedia.org/wiki/Principle_of_least_privilege)
 
 ## How to run the server
 
@@ -76,7 +76,7 @@ The Docker build does not seem to work on Apple silicon as I'm not sure there is
 
 ## Decision Explanations for my future self
 
-### http.rs
+### http/mod.rs
 1. In files like http.rs, we use naming conventions that may seem repetitive (like using `HttpRequest` inside of the `http.rs` file as oppose to just using `Request`) because I prefer, in functions like `vec_u8_to_http_request` to have the return type be `HttpRequest` as the function name implies
 
 1. In structs like those in `http.rs`, we use `String` as oppose to `&str` because
@@ -86,3 +86,9 @@ The Docker build does not seem to work on Apple silicon as I'm not sure there is
 1. We use [match guards](https://doc.rust-lang.org/rust-by-example/flow_control/match/guard.html) when parsing the received lines so we can validate the data as we structure it.
 
 1. We use `const` and not `static` for the supported methods and versions because they are immutable and known at compile time.
+
+1. we choose a vec<u8> for the httpmessage body because "the body of an HTTP request can contain any type of data, including binary data, which is best represented as a sequence of bytes." (Copilot)
+
+1. According to copilot, `.contains` is case sensitive
+
+1. I'm refactoring to not use .lines or .split_whitespace because it ignores trailing and leading whitespace. Technically trialing and leading whitespace should return an error so I am going to follow the spec as much as possible. (need a ref for this maybe? link to the spec)
