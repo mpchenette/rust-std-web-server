@@ -3,8 +3,10 @@ pub enum HttpRequestError {
     InvalidRequest,
     InvalidRequestLine,
     InvalidMethod,
+    UnsupportedMethod,
     // InvalidUri,
-    // InvalidVersion,
+    InvalidVersion,
+    UnsupportedVersion,
     // Utf8Error,
     // EmptyRequest,
 }

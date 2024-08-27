@@ -2,9 +2,11 @@
 
 // TODO: "In practice, servers are implemented to only expect a request (a response is interpreted as an unknown or invalid request method)" - rfc9112#section-2.1
 
-mod error;
+pub mod error;
 
-pub const HTTP_METHODS: [&[u8]; 9] = [b"GET", b"HEAD", b"POST", b"PUT", b"DELETE", b"CONNECT", b"OPTIONS", b"TRACE", b"PATCH"];
+pub const HTTP_METHODS: [&[u8]; 9] = [
+    b"GET", b"HEAD", b"POST", b"PUT", b"DELETE", b"CONNECT", b"OPTIONS", b"TRACE", b"PATCH",
+];
 pub const SUPPORTED_HTTP_METHODS: [&[u8]; 5] = [b"GET", b"HEAD", b"POST", b"PUT", b"DELETE"]; // "All general-purpose servers MUST support the methods GET and HEAD. All other methods are OPTIONAL." - rfc9110#section-9
 pub const HTTP_VERSIONS: [&[u8]; 4] = [b"HTTP/1.0", b"HTTP/1.1", b"HTTP/2.0", b"HTTP/3.0"];
 pub const SUPPORTED_HTTP_VERSIONS: [&[u8]; 1] = [b"HTTP/1.1"];
@@ -33,7 +35,7 @@ pub struct HttpStatusLine {
 pub struct HttpMessage {
     pub start_line: StartLine,
     pub header_field_lines: std::collections::HashMap<Vec<u8>, Vec<u8>>, // "zero or more header field lines"
-    pub body: Option<Vec<u8>>, // "optional message body"
+    pub body: Option<Vec<u8>>,                                           // "optional message body"
 }
 
 // ----- END HttpMessage - rfc9112#section-2.1 -----
@@ -63,9 +65,16 @@ pub fn is_valid_http_request_uri(potential_http_uri: &[u8]) -> bool {
     true
 }
 
-pub fn is_valid_http_version(unvalidated_http_version: &[u8]) -> bool {
+pub fn is_http_version(potential_http_version: &[u8]) -> bool {
     // "HTTP-version is case-sensitive." - rfc9112#section-2.3
-    if SUPPORTED_HTTP_VERSIONS.contains(&unvalidated_http_version) {
+    if HTTP_VERSIONS.contains(&potential_http_version) {
+        return true;
+    }
+    false
+}
+
+pub fn is_supported_http_version(http_version: &[u8]) -> bool {
+    if SUPPORTED_HTTP_VERSIONS.contains(&http_version) {
         return true;
     }
     false
@@ -77,8 +86,7 @@ pub fn is_valid_http_version(unvalidated_http_version: &[u8]) -> bool {
 pub fn vec_u8_to_http_message(buffer: Vec<u8>) -> Result<HttpMessage, error::HttpRequestError> {
 
     // ----- REQUEST LINE -----
-
-    let crlf_index = match buffer.windows(2).position(|window| window == b"\r\n"){
+    let crlf_index = match buffer.windows(2).position(|window| window == b"\r\n") {
         Some(crlf_index) => crlf_index,
         None => {
             // Send 400 Bad Request
@@ -95,21 +103,46 @@ pub fn vec_u8_to_http_message(buffer: Vec<u8>) -> Result<HttpMessage, error::Htt
         // Send 400 Bad Request
         return Err(error::HttpRequestError::InvalidRequestLine);
     }
-    
-    let method: Vec<u8> = if is_http_request_method(request_line_parts[0]) { request_line_parts[0].to_vec() } else {
+
+    // method
+    let method: Vec<u8> = if is_http_request_method(request_line_parts[0]) {
+        if is_supported_http_request_method(request_line_parts[0]) {
+            request_line_parts[0].to_vec()
+        } else {
+            // TODO: I think the appropriate thing to do here is propagate this information one level up fo that the tcp_steam can be written to
+            // Send 501 Not Implemented
+            // TODO: Check if there is a default reason phrase that we are supposed to give
+            let http_response: HttpMessage = construct_http_response(b"501".to_vec(), b"Not Implemented".to_vec());
+            // Send `http_response` to client
+            return Err(error::HttpRequestError::UnsupportedMethod);
+        }
+    } else {
         // Send 501 Not Implemented? In reality this is just not an HTTP method that we've received. What is the status code for that?
-        return Err(error::HttpRequestError::InvalidMethod);//???? ^^^
+        return Err(error::HttpRequestError::InvalidMethod); //???? ^^^
     };
-    let uri = request_line_parts[1].to_vec();
-    let version = request_line_parts[2].to_vec();
+
+    // request-target
+    let request_target: Vec<u8> = request_line_parts[1].to_vec();
+
+    // HTTP-version
+    let http_version: Vec<u8> = if is_http_version(request_line_parts[2]) {
+        if is_supported_http_version(request_line_parts[2]) {
+            request_line_parts[2].to_vec()
+        } else {
+            // Send 501 Not Implemented???
+            return Err(error::HttpRequestError::UnsupportedVersion);
+        }
+    } else {
+        // return appropriate status code
+        return Err(error::HttpRequestError::InvalidVersion);
+    };
 
     // Construct HttpRequestLine
     let http_request_line: HttpRequestLine = HttpRequestLine {
         method: method,
-        request_target: uri,
-        http_version: version,
+        request_target: request_target,
+        http_version: http_version,
     };
-
 
     // ----- HEADER FIELDS -----
 
@@ -138,7 +171,7 @@ pub fn vec_u8_to_http_message(buffer: Vec<u8>) -> Result<HttpMessage, error::Htt
     };
 
     //unused, just here to get rid of warnings
-    let http_response: HttpMessage = construct_http_response(Vec::new());
+    let http_response: HttpMessage = construct_http_response(b"200".to_vec(), b"OK".to_vec());
     // println!("LOG (CONSTRUCT_HTTP_REQUEST_FROM_VEC_U8):\n   HttpResponse Constructed:\n      version: {}\n      status_code: {}\n      reason_phrase: {}", http_response.status_line.version, http_response.status_line.status_code, http_response.status_line.reason_phrase);
     // for (key, value) in http_response.header_field_lines.iter() {
     //     println!("      {:?}: {:?}", key, value);
@@ -153,12 +186,12 @@ pub fn vec_u8_to_http_message(buffer: Vec<u8>) -> Result<HttpMessage, error::Htt
     Ok(http_request)
 }
 
-pub fn construct_http_response(buffer: Vec<u8>) -> HttpMessage {
+pub fn construct_http_response(status_code: Vec<u8>, reason_phrase: Vec<u8>) -> HttpMessage {
     let http_response: HttpMessage = HttpMessage {
         start_line: StartLine::StatusLine(HttpStatusLine {
             http_version: b"HTTP/1.1".to_vec(),
-            status_code: b"200".to_vec(),
-            reason_phrase: b"OK".to_vec(),
+            status_code: status_code,
+            reason_phrase: reason_phrase,
         }),
         header_field_lines: std::collections::HashMap::new(),
         body: None,
@@ -203,9 +236,6 @@ mod tests {
         // What if we are passed no body?
         // What if we are passed no request line? etc.
 
-
-
-
         // generate a vec<u8> of a valid http request
         let mut buffer: Vec<u8> = Vec::new();
         buffer.extend_from_slice(b"GET / HTTP/1.1\r\n");
@@ -223,7 +253,8 @@ mod tests {
             http_version: b"HTTP/1.1".to_vec(),
         };
 
-        let mut headers: std::collections::HashMap<Vec<u8>, Vec<u8>> = std::collections::HashMap::new();
+        let mut headers: std::collections::HashMap<Vec<u8>, Vec<u8>> =
+            std::collections::HashMap::new();
         headers.insert(b"Host".to_vec(), b"localhost:8000".to_vec());
         headers.insert(b"User-Agent".to_vec(), b"curl/7.64.1".to_vec());
         headers.insert(b"Accept".to_vec(), b"*/*".to_vec());
@@ -245,12 +276,15 @@ mod tests {
         //     }
         // }
 
-        match (&http_request.start_line, &http_request_to_compare.start_line) {
+        match (
+            &http_request.start_line,
+            &http_request_to_compare.start_line,
+        ) {
             (StartLine::RequestLine(start_line), StartLine::RequestLine(compare_line)) => {
                 assert_eq!(start_line.method, compare_line.method);
                 assert_eq!(start_line.request_target, compare_line.request_target);
                 assert_eq!(start_line.http_version, compare_line.http_version);
-            },
+            }
             _ => {
                 // Handle other cases if necessary
             }
@@ -258,10 +292,16 @@ mod tests {
         // assert_eq!(http_request.http_request_line.method, http_request_to_compare.http_request_line.method);
         // assert_eq!(http_request.http_request_line.request_target, http_request_to_compare.http_request_line.request_target);
         // assert_eq!(http_request.http_request_line.http_version, http_request_to_compare.http_request_line.http_version);
-        
+
         for (key, value) in http_request.header_field_lines.iter() {
-            assert_eq!(http_request_to_compare.header_field_lines.contains_key(key), true);
-            assert_eq!(http_request_to_compare.header_field_lines.get(key), Some(value));
+            assert_eq!(
+                http_request_to_compare.header_field_lines.contains_key(key),
+                true
+            );
+            assert_eq!(
+                http_request_to_compare.header_field_lines.get(key),
+                Some(value)
+            );
         }
         for (key, value) in http_request_to_compare.header_field_lines.iter() {
             assert_eq!(http_request.header_field_lines.contains_key(key), true);
