@@ -98,3 +98,62 @@ HttpRequest Struct: Defines the structure for the HTTP request.
 parse Function: Parses the start-line, headers, and body.
 main Function: Demonstrates how to use the HttpRequest::parse function with a sample HTTP request.
 This code reads an HTTP request from a buffer, parses the start-line and headers, and reads the body if indicated by the Content-Length header.
+
+
+
+
+
+
+# Bytes Only Question (Different Question)
+``` rs
+use std::io::Read;
+use std::net::{TcpListener, TcpStream};
+
+fn handle_client(mut stream: TcpStream) {
+    let mut buffer = [0; 512];
+    match stream.read(&mut buffer) {
+        Ok(_) => {
+            // Find the end of the request line (CRLF)
+            if let Some(pos) = buffer.windows(2).position(|window| window == b"\r\n") {
+                let request_line = &buffer[..pos];
+                
+                // Split the request line by spaces
+                let mut parts = request_line.split(|&b| b == b' ');
+                
+                if let (Some(method), Some(path), Some(version)) = (parts.next(), parts.next(), parts.next()) {
+                    if let (Ok(method), Ok(path), Ok(version)) = (std::str::from_utf8(method), std::str::from_utf8(path), std::str::from_utf8(version)) {
+                        println!("Method: {}", method);
+                        println!("Path: {}", path);
+                        println!("Version: {}", version);
+                    } else {
+                        println!("Failed to parse request line");
+                    }
+                } else {
+                    println!("Invalid HTTP request line");
+                }
+            } else {
+                println!("Failed to find end of request line");
+            }
+        }
+        Err(e) => {
+            println!("Failed to read from stream: {}", e);
+        }
+    }
+}
+
+fn main() {
+    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    println!("Server listening on port 7878");
+
+    for stream in listener.incoming() {
+        match stream {
+            Ok(stream) => {
+                handle_client(stream);
+            }
+            Err(e) => {
+                println!("Connection failed: {}", e);
+            }
+        }
+    }
+}
+```

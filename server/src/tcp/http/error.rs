@@ -1,6 +1,8 @@
 #[derive(Debug)] //
 pub enum HttpRequestError {
-    // InvalidMethod,
+    InvalidRequest,
+    InvalidRequestLine,
+    InvalidMethod,
     // InvalidUri,
     // InvalidVersion,
     // Utf8Error,

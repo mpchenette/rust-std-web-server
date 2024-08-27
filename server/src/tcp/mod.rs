@@ -11,13 +11,24 @@ pub fn handle_tcp_stream(mut tcp_stream: std::net::TcpStream) {
     assert!(auxillary::is_vec_u8_ascii(tcp_stream_vec_u8.clone()), "not valid US-ASCII"); // make sure the typeless vector is valid US-ASCII
     
     // the body of the request will always be empty with current implementation
-    let http_request: http::HttpRequest = http::vec_u8_to_http_request(tcp_stream_vec_u8).unwrap();
+    let http_request: http::HttpMessage = http::vec_u8_to_http_message(tcp_stream_vec_u8).unwrap();
 
-    let file_path: String = if http_request.http_request_line.uri.eq("/") {
-        String::from("index.html")
-    } else {
-        http_request.http_request_line.uri
+    let file_path: String = match http_request.start_line {
+        http::StartLine::RequestLine (http::HttpRequestLine{ request_target, .. } )=> {
+            if request_target.eq(b"/") {
+                String::from("index.html")
+            } else {
+                String::from_utf8(request_target).unwrap()//.to_string();
+            }
+        }
+        _ => String::from("index.html"),
     };
+
+    // let file_path: String = if http_request.http_request_line.uri.eq("/") {
+    //     String::from("index.html")
+    // } else {
+    //     http_request.http_request_line.uri
+    // };
 
     let (status_code, reason_phrase) = match std::fs::read(format!("{}{}", SITE_PATH, &file_path)) {
         Ok(_) => (200, "OK"),

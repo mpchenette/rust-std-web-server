@@ -92,3 +92,5 @@ The Docker build does not seem to work on Apple silicon as I'm not sure there is
 1. According to copilot, `.contains` is case sensitive
 
 1. I'm refactoring to not use .lines or .split_whitespace because it ignores trailing and leading whitespace. Technically trialing and leading whitespace should return an error so I am going to follow the spec as much as possible. (need a ref for this maybe? link to the spec)
+
+1. We should be parsing the raw bytes as oppose to converting it to a string first (according to copilot ->) because that approach is more efficient and allows for better control over the parsing process, especially when dealing with potentially malformed or malicious input.
