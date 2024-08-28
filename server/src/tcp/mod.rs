@@ -13,28 +13,34 @@ pub fn handle_tcp_stream(mut tcp_stream: std::net::TcpStream) {
     assert!(auxillary::is_vec_u8_ascii(tcp_stream_vec_u8.clone()), "not valid US-ASCII"); // make sure the typeless vector is valid US-ASCII
     
     // the body of the request will always be empty with current implementation
-    let http_request: http::HttpMessage = match http::vec_u8_to_http_message(tcp_stream_vec_u8) {
+    let http_request: http::HttpRequest = match http::vec_u8_to_http_request(tcp_stream_vec_u8) {
         Ok(http_request) => http_request,
         Err(e) => {
             let (status_code, reason_phrase) = match e {
-                http::error::HttpRequestError::UnsupportedMethod => (b"501".to_vec(), b"Unsupported Method".to_vec()),
-                _ => (b"404".to_vec(), b"Not Found".to_vec()),
+                http::error::HttpRequestError::UnsupportedMethod => (*b"501", b"Unsupported Method".to_vec()),
+                _ => (*b"404", b"Not Found".to_vec()),
             };
-            let http_response: http::HttpMessage = http::construct_http_response(status_code, reason_phrase);
+            let http_response: http::HttpResponse = http::construct_http_response(status_code, reason_phrase);
             // TODO: Send the response
             println!("ERROR (HANDLE_TCP_STREAM): Invalid HTTP Request: {:?}", e);
             return; //TODO: Should this println? Should this return?
         }
     };
 
-    let file_path: String = match http_request.start_line {
-        http::StartLine::RequestLine (http::HttpRequestLine{ request_target, .. } )=> {
-            if !request_target.eq(b"/") {
-                String::from_utf8(request_target).unwrap();
-            }
-            String::from("index.html")
-        }
-        _ => String::from("index.html"), //TODO: Is this really what we want to do here? should this be an error?
+    // let file_path: String = match http_request.start_line {
+    //     http::StartLine::RequestLine (http::HttpRequestLine{ request_target, .. } )=> {
+    //         if !request_target.eq(b"/") {
+    //             String::from_utf8(request_target).unwrap();
+    //         }
+    //         String::from("index.html")
+    //     }
+    //     _ => String::from("index.html"), //TODO: Is this really what we want to do here? should this be an error?
+    // };
+
+    let file_path: String = if http_request.start_line.request_target.eq(b"/") {
+        String::from("index.html")
+    } else {
+        String::from_utf8(http_request.start_line.request_target).unwrap()
     };
 
     let (status_code, reason_phrase) = match std::fs::read(format!("{}{}", SITE_PATH, &file_path)) {

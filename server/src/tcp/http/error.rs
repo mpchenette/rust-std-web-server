@@ -7,6 +7,7 @@ pub enum HttpRequestError {
     // InvalidUri,
     InvalidVersion,
     UnsupportedVersion,
+    InvalidHeader
     // Utf8Error,
     // EmptyRequest,
 }

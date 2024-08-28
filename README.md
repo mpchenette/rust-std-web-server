@@ -22,6 +22,7 @@ In doing so, we are able to statically link and containerize the web server, giv
 - look into if it's best practice to have main() return Result<(), Box<dyn Error>> or std::io::Result<()>
 - be sure we are handling header injection attacks when ingesting HTTP requests
 - double check all `pub` items. Only make public what needs to be public. [PoLP](https://en.wikipedia.org/wiki/Principle_of_least_privilege)
+- eventually I'd like to support all HTTP versions and methods, therefor eliminating the need to do an additional check on if it's supported after I've already checked if it's valid.
 
 ## How to run the server
 
