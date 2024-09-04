@@ -17,8 +17,9 @@ pub fn handle_tcp_stream(mut tcp_stream: std::net::TcpStream) {
         Ok(http_request) => http_request,
         Err(e) => {
             let (status_code, reason_phrase) = match e {
-                http::error::HttpRequestError::UnsupportedMethod => (*b"501", b"Unsupported Method".to_vec()),
-                _ => (*b"404", b"Not Found".to_vec()),
+                http::HttpRequestError::UnsupportedMethod => (b"501".to_vec(), b"Unsupported Method".to_vec()),
+                http::HttpRequestError::BadRequest => (b"400".to_vec(), b"Bad Request".to_vec()),
+                _ => (b"404".to_vec(), b"Not Found".to_vec()),
             };
             let http_response: http::HttpResponse = http::construct_http_response(status_code, reason_phrase);
             // TODO: Send the response
@@ -26,16 +27,6 @@ pub fn handle_tcp_stream(mut tcp_stream: std::net::TcpStream) {
             return; //TODO: Should this println? Should this return?
         }
     };
-
-    // let file_path: String = match http_request.start_line {
-    //     http::StartLine::RequestLine (http::HttpRequestLine{ request_target, .. } )=> {
-    //         if !request_target.eq(b"/") {
-    //             String::from_utf8(request_target).unwrap();
-    //         }
-    //         String::from("index.html")
-    //     }
-    //     _ => String::from("index.html"), //TODO: Is this really what we want to do here? should this be an error?
-    // };
 
     let file_path: String = if http_request.start_line.request_target.eq(b"/") {
         String::from("index.html")

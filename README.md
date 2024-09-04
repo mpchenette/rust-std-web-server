@@ -23,6 +23,7 @@ In doing so, we are able to statically link and containerize the web server, giv
 - be sure we are handling header injection attacks when ingesting HTTP requests
 - double check all `pub` items. Only make public what needs to be public. [PoLP](https://en.wikipedia.org/wiki/Principle_of_least_privilege)
 - eventually I'd like to support all HTTP versions and methods, therefor eliminating the need to do an additional check on if it's supported after I've already checked if it's valid.
+- we may have to make a check for version and method. For example, if it's an `HTTP/1.0` request, `OPTION` is not a valid method. Things like that.
 
 ## How to run the server
 
@@ -95,3 +96,5 @@ The Docker build does not seem to work on Apple silicon as I'm not sure there is
 1. I'm refactoring to not use .lines or .split_whitespace because it ignores trailing and leading whitespace. Technically trialing and leading whitespace should return an error so I am going to follow the spec as much as possible. (need a ref for this maybe? link to the spec)
 
 1. We should be parsing the raw bytes as oppose to converting it to a string first (according to copilot ->) because that approach is more efficient and allows for better control over the parsing process, especially when dealing with potentially malformed or malicious input.
+
+1. The types for all elements of both `RequestLine` and `StatusLine` will be `Vec<u8>` to adhere to uniformity across our implementation. Using `[u8; x]`, although more exact, lead to differing, more complex code with no real performance gain. (maybe give an example of how the code is more complex?). From Copilot: by using `Vec<u8>` we are "avoiding the complexity of lifetimes and the rigidity of fixed-size arrays."

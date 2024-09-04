@@ -57,3 +57,61 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+// pub const HTTP_VERSIONS_REFERENCES: [&[u8; 8]; 8] = [
+//     b"HTTP/1.0",
+//     b"HTTP/1.1",
+//     b"HTTP/1.2",
+//     b"HTTP/1.3",
+//     b"HTTP/1.4",
+//     b"HTTP/1.5",
+//     b"HTTP/2.0",
+//     b"HTTP/3.0",
+// ];
+// pub const HTTP_VERSIONS_VALUES: [[u8; 8]; 8] = [
+//     *b"HTTP/1.0",
+//     *b"HTTP/1.1",
+//     *b"HTTP/1.2",
+//     *b"HTTP/1.3",
+//     *b"HTTP/1.4",
+//     *b"HTTP/1.5",
+//     *b"HTTP/2.0",
+//     *b"HTTP/3.0",
+// ];
+
+// fn benchmark_slices() {
+//     let mut total_duration = std::time::Duration::new(0, 0);
+//     for _ in 0..100 {
+//         let start = std::time::Instant::now();
+//         for _ in 0..1_000_000 {
+//             for method in HTTP_VERSIONS_REFERENCES.iter() {
+//                 if *method == b"HTTP/2.0" {
+//                     std::hint::black_box(method);
+//                 }
+//             }
+//         }
+//         total_duration += start.elapsed();
+//     }
+//     println!("Average time taken for slices: {:?}", total_duration / 10);
+// }
+
+// fn benchmark_arrays() {
+//     let mut total_duration = std::time::Duration::new(0, 0);
+//     for _ in 0..100 {
+//         let start = std::time::Instant::now();
+//         for _ in 0..1_000_000 {
+//             for version in HTTP_VERSIONS_VALUES.iter() {
+//                 if version == b"HTTP/2.0" {
+//                     std::hint::black_box(version);
+//                 }
+//             }
+//         }
+//         total_duration += start.elapsed();
+//     }
+//     println!("Average time taken for arrays: {:?}", total_duration / 10);
+// }
+
+// fn main() {
+//     benchmark_slices();
+//     benchmark_arrays();
+// }
