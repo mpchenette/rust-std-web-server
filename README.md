@@ -78,6 +78,9 @@ The Docker build does not seem to work on Apple silicon as I'm not sure there is
 
 ## Decision Explanations for my future self
 
+### General
+1. Do not right click -> format document in vscode.
+
 ### http/mod.rs
 1. In files like http.rs, we use naming conventions that may seem repetitive (like using `HttpRequest` inside of the `http.rs` file as oppose to just using `Request`) because I prefer, in functions like `vec_u8_to_http_request` to have the return type be `HttpRequest` as the function name implies
 

@@ -15,13 +15,6 @@ pub const SUPPORTED_HTTP_METHODS: [&[u8]; 5] = [
 ];
 pub const HTTP_VERSIONS: [[u8; 8]; 4] = [*b"HTTP/1.0", *b"HTTP/1.1", *b"HTTP/2.0", *b"HTTP/3.0"];
 pub const SUPPORTED_HTTP_VERSIONS: [[u8; 8]; 1] = [*b"HTTP/1.1"];
-pub const HTTP_STATUS_CODES: &[([u8; 3], &[u8])] = &[
-    (*b"200", b"OK"),
-    (*b"400", b"Bad Request"),
-    (*b"404", b"Not Found"),
-    (*b"501", b"Not Implemented"),
-    (*b"503", b"Service Unavailable"),
-];
 
 // ----- START HttpMessage - rfc9112#section-2.1 -----
 
@@ -55,42 +48,32 @@ pub struct HttpResponse {
 
 pub fn is_http_request_method(potential_http_request_method: &[u8]) -> bool {
     // "The method token is case-sensitive..." - rfc9110#section-9
-    if HTTP_METHODS.contains(&potential_http_request_method) {
-        return true;
-    }
+    if HTTP_METHODS.contains(&potential_http_request_method) { return true }
     false
 }
 
 // Checks if this server supports the HTTP method passed to it.
 pub fn is_supported_http_request_method(http_request_method: &[u8]) -> bool {
-    if SUPPORTED_HTTP_METHODS.contains(&http_request_method) {
-        return true;
-    }
+    if SUPPORTED_HTTP_METHODS.contains(&http_request_method) { return true }
     false
 }
 
 pub fn is_valid_http_request_uri(potential_http_uri: &[u8]) -> bool {
     // TODO: Improve the implementation here
-    if potential_http_uri[0] == b'/' {
-        return true;
-    }
+    if potential_http_uri[0] == b'/' { return true }
     false
 }
 
 pub fn is_http_version(potential_http_version: &[u8]) -> bool {
     for http_version in HTTP_VERSIONS.iter() {
-        if potential_http_version == http_version {
-            return true;
-        }
+        if potential_http_version == http_version { return true }
     }
     false
 }
 
 pub fn is_supported_http_version(http_version: &[u8]) -> bool {
     for supported_http_version in SUPPORTED_HTTP_VERSIONS.iter() {
-        if http_version == supported_http_version {
-            return true;
-        }
+        if http_version == supported_http_version { return true }
     }
     false
 }
@@ -99,56 +82,37 @@ pub fn is_supported_http_version(http_version: &[u8]) -> bool {
 // TODO: Will also return an error if we are passed an HTTP response. (make sure this is true and add it to the test cases)
 
 pub fn vec_u8_to_http_request(buffer: Vec<u8>) -> Result<HttpRequest, HttpRequestError> {
-    // ----- REQUEST LINE -----
 
+    // ----- REQUEST LINE -----
     let crlf_index: usize = match buffer.windows(2).position(|window| window == b"\r\n") {
         Some(crlf_index) => crlf_index,
-        None => {
-            // No CRLF -> send 400
-            return Err(HttpRequestError::BadRequest);
-        }
+        None => return Err(HttpRequestError::BadRequest) // No CRLF -> send 400
     };
 
     let request_line: &[u8] = &buffer[..crlf_index]; // we want this to be a & so we don't replicate the buffer into a new array
     let request_line_parts: Vec<&[u8]> = request_line.split(|&b| b == b' ').collect();
-    if request_line_parts.len() != 3 {
-        // Malformed request line -> send 400
-        return Err(HttpRequestError::BadRequest);
-    }
+    if request_line_parts.len() != 3 { return Err(HttpRequestError::BadRequest) } // Malformed request line -> send 400
 
     // ----- method
-    let method: Vec<u8> = if is_http_request_method(request_line_parts[0]) {
-        if is_supported_http_request_method(request_line_parts[0]) {
-            request_line_parts[0].to_vec()
-        } else {
-            // Is an HTTP method, not a supported HTTP method -> send 501
-            return Err(HttpRequestError::UnsupportedMethod);
+    let method: Vec<u8> =
+        if is_http_request_method(request_line_parts[0]) {
+            if is_supported_http_request_method(request_line_parts[0]) { request_line_parts[0].to_vec() }
+            else { return Err(HttpRequestError::UnsupportedMethod) } // Is an HTTP method, not a supported HTTP method -> send 501
         }
-    } else {
-        // Not an HTTP method -> send 400
-        return Err(HttpRequestError::BadRequest);
-    };
+        else { return Err(HttpRequestError::BadRequest) }; // Not an HTTP method -> send 400
 
     // ----- request-target
-    let request_target: Vec<u8> = if is_valid_http_request_uri(request_line_parts[1]) {
-        request_line_parts[1].to_vec()
-    } else {
-        // Send 400 Bad Request
-        return Err(HttpRequestError::BadRequest);
-    };
+    let request_target: Vec<u8> =
+        if is_valid_http_request_uri(request_line_parts[1]) { request_line_parts[1].to_vec() }
+        else { return Err(HttpRequestError::BadRequest) }; // Send 400 Bad Request
 
     // ----- HTTP-version
-    let http_version: Vec<u8> = if is_http_version(request_line_parts[2]) {
-        if is_supported_http_version(request_line_parts[2]) {
-            request_line_parts[2].to_vec()
-        } else {
-            // Is an HTTP version, not a supported HTTP version -> Send 505
-            return Err(HttpRequestError::UnsupportedVersion);
+    let http_version: Vec<u8> =
+        if is_http_version(request_line_parts[2]) {
+            if is_supported_http_version(request_line_parts[2]) { request_line_parts[2].to_vec() }
+            else { return Err(HttpRequestError::UnsupportedVersion) } // Is an HTTP version, not a supported HTTP version -> Send 505
         }
-    } else {
-        // Not an HTTP version -> Send 400
-        return Err(HttpRequestError::BadRequest);
-    };
+        else { return Err(HttpRequestError::BadRequest) }; // Not an HTTP version -> Send 400
 
     // Construct HttpRequestLine
     let http_request_line: HttpRequestLine = HttpRequestLine {
@@ -160,32 +124,23 @@ pub fn vec_u8_to_http_request(buffer: Vec<u8>) -> Result<HttpRequest, HttpReques
     // ----- HEADER FIELDS -----
     // --- START FROM COPILOT
     let headers_start = crlf_index + 2; // Skip the CRLF after the request line
-    let headers_end = match buffer[headers_start..]
-        .windows(4)
-        .position(|window| window == b"\r\n\r\n")
-    {
+    let headers_end = match buffer[headers_start..].windows(4).position(|window| window == b"\r\n\r\n") {
         Some(pos) => headers_start + pos,
         None => return Err(HttpRequestError::BadRequest),
     };
 
     let headers_section = &buffer[headers_start..headers_end];
-    let headers_lines: Vec<&[u8]> = headers_section
-        .split(|&b| b == b'\r' || b == b'\n')
-        .filter(|line| !line.is_empty())
-        .collect();
+    let headers_lines: Vec<&[u8]> = headers_section.split(|&b| b == b'\r' || b == b'\n').filter(|line| !line.is_empty()).collect();
 
-    let mut http_header_fields: std::collections::HashMap<Vec<u8>, Vec<u8>> =
-        std::collections::HashMap::new();
+    let mut http_header_fields: std::collections::HashMap<Vec<u8>, Vec<u8>> = std::collections::HashMap::new();
     for line in headers_lines {
         if let Some(pos) = line.windows(2).position(|window| window == b": ") {
             let key = &line[..pos];
             let value = &line[pos + 2..];
             http_header_fields.insert(key.to_vec(), value.to_vec());
-        } else {
-            return Err(HttpRequestError::InvalidHeader);
         }
+        else { return Err(HttpRequestError::InvalidHeader) }
     }
-    // --- END FROM COPILOT
 
     // Construct HttpRequest
     let http_request: HttpRequest = HttpRequest {
@@ -193,6 +148,8 @@ pub fn vec_u8_to_http_request(buffer: Vec<u8>) -> Result<HttpRequest, HttpReques
         header_field_lines: http_header_fields,
         body: Some(buffer[headers_end + 4..].to_vec()), // None,
     };
+        // --- END FROM COPILOT
+
 
     //unused, just here to get rid of warnings
     let http_response: HttpResponse = construct_http_response(b"200".to_vec(), b"OK".to_vec());
@@ -234,17 +191,19 @@ mod tests {
         for method in HTTP_METHODS.iter() {
             assert!(is_http_request_method(method));
         }
-        assert!(!is_http_request_method(b"NONE")); // Not an HTTP method
-        assert!(!is_http_request_method(b"get")); // lowercase
-        assert!(!is_http_request_method(b"DELET")); // incomplete
-        assert!(!is_http_request_method(b"")); // Empty string
-        assert!(!is_http_request_method(b" ")); // Single whitespace
-        assert!(!is_http_request_method(b"   ")); // Multiple whitespaces
-        assert!(!is_http_request_method(b"GET ")); // Trailing whitespace
-        assert!(!is_http_request_method(b" GET")); // Leading whitespace
-        assert!(!is_http_request_method(b"G@T")); // Special character
-        assert!(!is_http_request_method(b"123")); // Numeric string
-        assert!(!is_http_request_method(b"GeT")); // Mixed case
+        assert!(!is_http_request_method(b"NONE"));  // Not an HTTP method
+        assert!(!is_http_request_method(b"get"));   // Lowercase
+        assert!(!is_http_request_method(b"DELET")); // Incomplete
+        assert!(!is_http_request_method(b""));      // Empty string
+        assert!(!is_http_request_method(b" "));     // Single whitespace
+        assert!(!is_http_request_method(b"   "));   // Multiple whitespaces
+        assert!(!is_http_request_method(b"\r\n"));  // CRLF
+        assert!(!is_http_request_method(b"\t"));    // Tab
+        assert!(!is_http_request_method(b"GET "));  // Trailing whitespace
+        assert!(!is_http_request_method(b" GET"));  // Leading whitespace
+        assert!(!is_http_request_method(b"G@T"));   // Special character
+        assert!(!is_http_request_method(b"123"));   // Numeric string
+        assert!(!is_http_request_method(b"GeT"));   // Mixed case
         assert!(!is_http_request_method(b"GETPOST")); // Concatenated valid methods
         assert!(!is_http_request_method(&(b"A".repeat(100)))); // Excessively long string
     }
@@ -265,8 +224,7 @@ mod tests {
             http_version: b"HTTP/1.1".to_vec(),
         };
 
-        let mut headers: std::collections::HashMap<Vec<u8>, Vec<u8>> =
-            std::collections::HashMap::new();
+        let mut headers: std::collections::HashMap<Vec<u8>, Vec<u8>> = std::collections::HashMap::new();
         headers.insert(b"Host".to_vec(), b"localhost:8000".to_vec());
         headers.insert(b"User-Agent".to_vec(), b"curl/7.64.1".to_vec());
         headers.insert(b"Accept".to_vec(), b"*/*".to_vec());
@@ -278,49 +236,17 @@ mod tests {
         };
 
         // Compare the two HttpRequests
-        assert_eq!(
-            http_request.start_line.method,
-            http_request_to_compare.start_line.method
-        );
-        assert_eq!(
-            http_request.start_line.request_target,
-            http_request_to_compare.start_line.request_target
-        );
-        assert_eq!(
-            http_request.start_line.http_version,
-            http_request_to_compare.start_line.http_version
-        );
+        assert_eq!(http_request.start_line.method,         http_request_to_compare.start_line.method);
+        assert_eq!(http_request.start_line.request_target, http_request_to_compare.start_line.request_target);
+        assert_eq!(http_request.start_line.http_version,   http_request_to_compare.start_line.http_version);
 
         for (key, value) in http_request.header_field_lines.iter() {
-            assert_eq!(
-                http_request_to_compare.header_field_lines.contains_key(key),
-                true
-            );
-            assert_eq!(
-                http_request_to_compare.header_field_lines.get(key),
-                Some(value)
-            );
+            assert_eq!(http_request_to_compare.header_field_lines.contains_key(key), true);
+            assert_eq!(http_request_to_compare.header_field_lines.get(key), Some(value));
         }
         for (key, value) in http_request_to_compare.header_field_lines.iter() {
             assert_eq!(http_request.header_field_lines.contains_key(key), true);
             assert_eq!(http_request.header_field_lines.get(key), Some(value));
         }
-
-        // // Additional test cases (from Copilot)
-        // // Test case: empty buffer
-        // let buffer: Vec<u8> = Vec::new();
-        // let result: Result<HttpRequest, error::HttpRequestError> = vec_u8_to_http_request(buffer);
-        // assert!(result.is_err());
-        // // Test case: missing request line
-        // let mut buffer: Vec<u8> = Vec::new();
-        // buffer.extend_from_slice(b"\r\n");
-        // let result: Result<HttpRequest, error::HttpRequestError> = vec_u8_to_http_request(buffer);
-        // assert!(result.is_err());
-        // // Test case: missing request method
-        // let mut buffer: Vec<u8> = Vec::new();
-        // buffer.extend_from_slice(b"/ HTTP/1.1\r\n");
-        // buffer.extend_from_slice(b"\r\n");
-        // let result: Result<HttpRequest, error::HttpRequestError> = vec_u8_to_http_request(buffer);
-        // assert!(result.is_err());
     }
 }
